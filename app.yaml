@@ -1,0 +1,7 @@
+runtime: python311
+entrypoint: gunicorn -b :$PORT main:app
+
+env_variables:
+  TM_API_KEY: "qMdlp9Yy9rlAkTe1HjxHhGpcBI8ILHDn"
+  GOOGLE_API_KEY: "AIzaSyAw1AUEoa1dU3OomoR1km2yQ3YrJp1-XPg"
+

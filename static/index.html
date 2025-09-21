@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Events Search</title>
+	<link rel="stylesheet" href="/static/css/styles.css" />
+	<link rel="icon" href="data:," />
+</head>
+<body>
+	<div class="page-bg"></div>
+	<main class="main">
+		<section class="search-card" aria-label="Events Search">
+			<h1 class="title">Events Search</h1>
+			<form id="searchForm" novalidate>
+				<div class="field full">
+					<label for="keyword">Keyword <span class="required" aria-hidden="true">*</span></label>
+					<input id="keyword" name="keyword" type="text" placeholder="Enter keyword" required />
+					<div class="error" id="keywordError" role="alert" aria-live="polite"></div>
+				</div>
+
+				<div class="grid-two">
+					<div class="field">
+						<label for="distance">Distance (miles)</label>
+						<input id="distance" name="distance" type="number" min="0" step="1" placeholder="10" />
+					</div>
+					<div class="field">
+						<label for="category">Category</label>
+						<select id="category" name="category">
+							<option value="default" selected>Default</option>
+							<option value="KZFzniwnSyZfZ7v7nJ">Music</option>
+							<option value="KZFzniwnSyZfZ7v7nE">Sports</option>
+							<option value="KZFzniwnSyZfZ7v7na">Arts &amp; Theatre</option>
+							<option value="KZFzniwnSyZfZ7v7nn">Film</option>
+							<option value="KZFzniwnSyZfZ7v7n1">Miscellaneous</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="field full" id="locationField">
+					<label for="location">Location <span class="required" aria-hidden="true">*</span></label>
+					<input id="location" name="location" type="text" placeholder="Enter a location" />
+					<div class="error" id="locationError" role="alert" aria-live="polite"></div>
+				</div>
+
+				<div class="field inline">
+					<label class="checkbox">
+						<input type="checkbox" id="autoDetect" name="autoDetect" />
+						<span>Auto-detect location</span>
+					</label>
+				</div>
+
+				<div class="actions">
+					<button type="submit" class="btn btn-search" id="searchBtn">SEARCH</button>
+					<button type="button" class="btn btn-clear" id="clearBtn">CLEAR</button>
+				</div>
+
+				<input type="hidden" id="lat" name="lat" />
+				<input type="hidden" id="lon" name="lon" />
+			</form>
+		</section>
+
+		<section id="resultsSection" class="results" style="display:none">
+			<div id="resultsContainer"></div>
+		</section>
+
+		<section id="detailsSection" class="details" style="display:none">
+			<div id="detailsContainer"></div>
+		</section>
+	</main>
+
+	<script>
+		// Replace with your actual keys before deploying
+		window.APP_CONFIG = {
+			GOOGLE_API_KEY: 'AIzaSyAw1AUEoa1dU3OomoR1km2yQ3YrJp1-XPg',
+			IPINFO_TOKEN: 'd2ca9124c45755'
+		};
+	</script>
+	<script src="/static/js/app.js"></script>
+</body>
+</html>
+
+
