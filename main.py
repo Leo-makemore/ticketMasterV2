@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 import requests
 import flask
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()  # 自动加载根目录的 .env 文件
 
@@ -61,6 +62,15 @@ def get_env(name: str, default: Optional[str] = None) -> str:
 
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+
+# Enable CORS for frontend development/production (frontend is a separate app)
+# Configure allowed origins via env var CORS_ORIGINS (comma-separated) or default to "*" for /api/* routes
+allowed_origins_env = os.environ.get("CORS_ORIGINS", "*")
+if allowed_origins_env == "*":
+	CORS(app, resources={r"/api/*": {"origins": "*"}})
+else:
+	origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+	CORS(app, resources={r"/api/*": {"origins": origins}})
 
 # Lazy imports to avoid circulars and to keep main uncluttered
 from services.ticketmaster_service import (

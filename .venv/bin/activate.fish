@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/leo/Documents/csci 571/ticketmaster/.venv"
+set -gx VIRTUAL_ENV "/Users/leo/Documents/csci 571/ticketmasterV2/.venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
