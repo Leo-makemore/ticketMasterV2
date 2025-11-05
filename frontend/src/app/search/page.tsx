@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchEvents } from "@/lib/api";
 import type { MappedEvent } from "@/types/tm";
@@ -17,6 +17,7 @@ import { CalendarDays, MapPin, Tag } from "lucide-react";
 import ShareButton from "@/components/common/ShareButton";
 import { useSearchParams } from "next/navigation";
 import { addRecent } from "@/lib/recent";
+import SearchSuggestions from "@/components/search/SearchSuggestions";
 
 type CategoryOption = {
   label: string;
@@ -68,6 +69,8 @@ export default function SearchPage() {
   const [location, setLocation] = useState("");
   const [autoDetect, setAutoDetect] = useState(false);
   const [ipinfoToken] = useState<string | undefined>(undefined);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const keywordInputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +128,19 @@ export default function SearchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (keywordInputRef.current && !keywordInputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    if (showSuggestions) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showSuggestions]);
+
   return (
     <div className="container mx-auto max-w-5xl p-6 space-y-6">
       <Card>
@@ -134,7 +150,26 @@ export default function SearchPage() {
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium">Keyword *</label>
-            <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Enter keyword" />
+            <div ref={keywordInputRef} className="relative">
+              <Input
+                value={keyword}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Enter keyword"
+              />
+              <SearchSuggestions
+                keyword={keyword}
+                isOpen={showSuggestions}
+                onSelect={(kw) => {
+                  setKeyword(kw);
+                  setShowSuggestions(false);
+                }}
+                onClose={() => setShowSuggestions(false)}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Distance (miles)</label>
