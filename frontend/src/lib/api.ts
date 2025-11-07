@@ -34,4 +34,9 @@ export async function fetchVenue(keyword: string): Promise<any> {
   return data;
 }
 
+export async function reverseGeocode(lat: number, lon: number): Promise<{ location: string; formatted_address: string }> {
+  const { data } = await api.get("/api/geocode/reverse", { params: { lat, lon } });
+  return data;
+}
+
 

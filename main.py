@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from typing import Optional, Tuple
 
 import requests
@@ -83,16 +84,50 @@ from services.ticketmaster_service import (
 )
 
 
+def _inject_api_keys_to_html(html_content: str) -> str:
+	"""Inject API keys from environment variables into HTML content"""
+	google_key = os.environ.get("GOOGLE_API_KEY", "")
+	ipinfo_token = os.environ.get("IPINFO_TOKEN", "")
+	
+	# Escape the keys for JavaScript (JSON encoding handles this safely)
+	google_key_js = json.dumps(google_key)
+	ipinfo_token_js = json.dumps(ipinfo_token)
+	
+	# Replace the APP_CONFIG object (match multiline pattern including comments)
+	# Pattern matches: window.APP_CONFIG = { ... } with any content including newlines
+	replacement = f'window.APP_CONFIG = {{\n\t\t\tGOOGLE_API_KEY: {google_key_js},\n\t\t\tIPINFO_TOKEN: {ipinfo_token_js}\n\t\t}}'
+	
+	# Use DOTALL flag to match across newlines (makes . match newline too)
+	# Pattern matches from window.APP_CONFIG = { until the matching closing brace
+	config_pattern = r'window\.APP_CONFIG\s*=\s*\{.*?\}'
+	modified_html = re.sub(config_pattern, replacement, html_content, flags=re.DOTALL)
+	
+	return modified_html
+
+
 @app.route("/")
 def index() -> "flask.Response":
-	# Serve the static index.html without using templates (per assignment rules)
-	return send_from_directory(app.static_folder, "index.html")
+	# Serve the static index.html with API keys injected server-side
+	# This prevents exposing API keys in the source code
+	try:
+		html_path = os.path.join(app.static_folder, "index.html")
+		with open(html_path, "r", encoding="utf-8") as f:
+			html_content = f.read()
+		
+		# Inject API keys from environment variables
+		html_content = _inject_api_keys_to_html(html_content)
+		
+		return flask.Response(html_content, mimetype="text/html")
+	except Exception as e:
+		# Fallback to original file if injection fails
+		return send_from_directory(app.static_folder, "index.html")
 
 
 @app.route("/index.html")
 def index_html() -> "flask.Response":
 	# Provide explicit /index.html path for graders
-	return send_from_directory(app.static_folder, "index.html")
+	# Same as root route, with API keys injected
+	return index()
 
 
 @app.route("/api/health")
@@ -215,6 +250,75 @@ def api_venue() -> "flask.Response":
 		return jsonify({"error": "Invalid JSON from Ticketmaster API"}), 502
 
 	return jsonify(data)
+
+
+@app.route("/api/geocode/reverse")
+def api_reverse_geocode() -> "flask.Response":
+	"""Reverse geocode: convert lat,lon to address"""
+	lat_str = (request.args.get("lat") or "").strip()
+	lon_str = (request.args.get("lon") or "").strip()
+
+	if not lat_str or not lon_str:
+		return jsonify({"error": "Missing required parameters: lat, lon"}), 400
+
+	try:
+		lat = float(lat_str)
+		lon = float(lon_str)
+	except ValueError:
+		return jsonify({"error": "Invalid coordinates (lat, lon)"}), 400
+
+	google_key = get_env("GOOGLE_API_KEY", None)
+	if not google_key:
+		return jsonify({"error": "Google API key not configured"}), 500
+
+	geo_url = "https://maps.googleapis.com/maps/api/geocode/json"
+	try:
+		resp = requests.get(
+			geo_url,
+			params={"latlng": f"{lat},{lon}", "key": google_key},
+			timeout=15
+		)
+		resp.raise_for_status()
+		data = resp.json()
+
+		if data.get("status") != "OK" or not data.get("results"):
+			return jsonify({"error": "Reverse geocoding failed", "status": data.get("status")}), 400
+
+		# Extract formatted address
+		result = data["results"][0]
+		formatted_address = result.get("formatted_address", "")
+		
+		# Also extract city, state, country components
+		components = {}
+		for comp in result.get("address_components", []):
+			types = comp.get("types", [])
+			if "locality" in types:
+				components["city"] = comp.get("long_name", "")
+			elif "administrative_area_level_1" in types:
+				components["state"] = comp.get("short_name", "")
+			elif "country" in types:
+				components["country"] = comp.get("short_name", "")
+
+		# Build a concise location string
+		location_parts = []
+		if components.get("city"):
+			location_parts.append(components["city"])
+		if components.get("state"):
+			location_parts.append(components["state"])
+		if components.get("country"):
+			location_parts.append(components["country"])
+		
+		location_str = ", ".join(location_parts) if location_parts else formatted_address
+
+		return jsonify({
+			"formatted_address": formatted_address,
+			"location": location_str,
+			"components": components,
+		})
+	except requests.RequestException as req_err:
+		return jsonify({"error": "Reverse geocoding request failed", "details": str(req_err)}), 502
+	except Exception as e:
+		return jsonify({"error": "Unexpected error during reverse geocoding", "details": str(e)}), 500
 
 
 if __name__ == "__main__":

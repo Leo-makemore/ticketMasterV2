@@ -70,10 +70,12 @@
 	</main>
 
 	<script>
-		// Replace with your actual keys before deploying
+		// API keys should be configured via environment variables on the server
+		// For local development, you can set them here (but DO NOT commit them to git)
+		// In production, these should be injected server-side or removed entirely
 		window.APP_CONFIG = {
-			GOOGLE_API_KEY: 'AIzaSyAw1AUEoa1dU3OomoR1km2yQ3YrJp1-XPg',
-			IPINFO_TOKEN: 'd2ca9124c45755'
+			GOOGLE_API_KEY: '', // Set via environment variable or server-side injection
+			IPINFO_TOKEN: '' // Set via environment variable or server-side injection
 		};
 	</script>
 	<script src="/static/js/app.js"></script>

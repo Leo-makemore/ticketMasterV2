@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/Users/leo/Documents/csci 571/ticketmasterV2/.venv/bin/python3.13" "$0" "$@"
-' '''
+#!/Users/leo/Documents/GitHub/project/ticketmasterV2-personal/.venv/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys
